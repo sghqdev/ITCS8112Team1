@@ -4,6 +4,14 @@ import { Link } from "react-router-dom";
 const Record = (props) => (
   <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
     <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+      <input
+        type="checkbox"
+        checked={props.isSelected}
+        onChange={() => props.onSelectRecord(props.record._id)}
+        className="h-4 w-4 rounded border-gray-300"
+      />
+    </td>
+    <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
       {props.record.name}
     </td>
     <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
@@ -37,6 +45,7 @@ const Record = (props) => (
 
 export default function RecordList() {
   const [records, setRecords] = useState([]);
+  const [selectedRecords, setSelectedRecords] = useState(new Set());
 
   // This method fetches the records from the database.
   useEffect(() => {
@@ -51,8 +60,7 @@ export default function RecordList() {
       setRecords(records);
     }
     getRecords();
-    return;
-  }, [records.length]);
+  }, []);
 
   // This method will delete a record
   async function deleteRecord(id) {
@@ -63,7 +71,43 @@ export default function RecordList() {
     setRecords(newRecords);
   }
 
-  // This method will map out the records on the table
+  // Add these new functions to handle selection
+  const handleSelectRecord = (id) => {
+    setSelectedRecords(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRecords.size === records.length) {
+      setSelectedRecords(new Set());
+    } else {
+      setSelectedRecords(new Set(records.map(record => record._id)));
+    }
+  };
+
+  // Add bulk delete function
+  async function bulkDelete() {
+    // Delete all selected records
+    for (const id of selectedRecords) {
+      await fetch(`http://localhost:5050/record/${id}`, {
+        method: "DELETE",
+      });
+    }
+    // Update records state by filtering out deleted records
+    const newRecords = records.filter((record) => !selectedRecords.has(record._id));
+    setRecords(newRecords);
+    // Clear selection
+    setSelectedRecords(new Set());
+  }
+
+  // Modify the recordList function
   function recordList() {
     return records.map((record) => {
       return (
@@ -71,20 +115,40 @@ export default function RecordList() {
           record={record}
           deleteRecord={() => deleteRecord(record._id)}
           key={record._id}
+          isSelected={selectedRecords.has(record._id)}
+          onSelectRecord={handleSelectRecord}
         />
       );
     });
   }
 
-  // This following section will display the table with the records of individuals.
+  // Modify the return section to only show bulk delete button
   return (
     <>
-      <h3 className="text-lg font-semibold p-4">Employee Records</h3>
+      <div className="flex justify-between items-center p-4">
+        <h3 className="text-lg font-semibold">Employee Records</h3>
+        {selectedRecords.size > 0 && (
+          <button
+            className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-red-600 hover:bg-red-700 text-white h-9 rounded-md px-3"
+            onClick={bulkDelete}
+          >
+            Delete Selected ({selectedRecords.size})
+          </button>
+        )}
+      </div>
       <div className="border rounded-lg overflow-hidden">
         <div className="relative w-full overflow-auto">
           <table className="w-full caption-bottom text-sm">
             <thead className="[&amp;_tr]:border-b">
               <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                  <input
+                    type="checkbox"
+                    checked={selectedRecords.size === records.length && records.length > 0}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
                   Name
                 </th>
