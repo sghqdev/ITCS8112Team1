@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import * as XLSX from 'xlsx';
 
 export default function Record() {
   const [form, setForm] = useState({
@@ -8,6 +9,12 @@ export default function Record() {
     level: "",
   });
   const [isNew, setIsNew] = useState(true);
+  
+  // State for bulk upload functionality
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewData, setPreviewData] = useState([]);
+  const [fileName, setFileName] = useState("");
+
   const params = useParams();
   const navigate = useNavigate();
 
@@ -79,6 +86,63 @@ export default function Record() {
       navigate("/");
     }
   }
+
+  // This function handles Excel file selection and parsing
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileName(file.name);
+      const data = await readExcelFile(file);
+      setSelectedFile(file);
+      setPreviewData(data);
+    }className="... bg-purple-500 hover:bg-purple-600 text-white"
+  };
+
+  // This function reads and parses the Excel file
+  const readExcelFile = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, {
+          type: 'array',
+          cellDates: true,
+          cellStyles: true,
+          cellNF: true
+        });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 2 });
+        resolve(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // This function handles the bulk upload of records
+  const handleBulkUpload = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const response = await fetch("http://localhost:5050/record/bulk-upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      setSelectedFile(null);
+      setPreviewData([]);
+      setFileName("");
+      navigate("/");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
 
   // This following section will display the form that takes the input from the user.
   return (
@@ -204,6 +268,80 @@ export default function Record() {
           className="inline-flex items-center justify-center whitespace-nowrap text-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3 cursor-pointer mt-4"
         />
       </form>
+      {/* Bulk Upload Section */}
+      <div className="border rounded-lg overflow-hidden p-4">
+        <h3 className="text-base font-semibold leading-7 text-slate-900 mb-4">
+          Create Employee Records by uploading a file
+        </h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium leading-6 text-slate-900 mb-2">
+              Upload a File
+            </label>
+            <div className="flex items-center space-x-4 ">
+              <label className="relative cursor-pointer">
+                <span className="text-base font-semibold leading-7 bg-purple-100 hover:bg-purple-300 text-purple-700 px-1 py-1">
+                  Choose File
+                </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileSelect}
+                />
+              </label>
+              {fileName && (
+                <span className="text-sm text-green-700">{fileName}</span>
+              )}
+            </div>
+          </div>
+
+          {previewData.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={handleBulkUpload}
+                className="inline-flex items-center justify-center whitespace-nowrap text-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3"
+              >
+                Upload to MongoDB
+              </button>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        position
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        level
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {previewData.map((row, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {row.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {row.position}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {row.level}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }
