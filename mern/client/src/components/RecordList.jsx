@@ -37,6 +37,7 @@ const Record = (props) => (
 
 export default function RecordList() {
   const [records, setRecords] = useState([]);
+  const [levelFilter, setLevelFilter] = useState("all");
 
   // This method fetches the records from the database.
   useEffect(() => {
@@ -51,8 +52,7 @@ export default function RecordList() {
       setRecords(records);
     }
     getRecords();
-    return;
-  }, [records.length]);
+  }, []);
 
   // This method will delete a record
   async function deleteRecord(id) {
@@ -63,9 +63,15 @@ export default function RecordList() {
     setRecords(newRecords);
   }
 
-  // This method will map out the records on the table
+  // Add this new function to filter records
+  const filteredRecords = () => {
+    if (levelFilter === "all") return records;
+    return records.filter((record) => record.level === levelFilter);
+  };
+
+  // Modify the existing recordList function to use filteredRecords
   function recordList() {
-    return records.map((record) => {
+    return filteredRecords().map((record) => {
       return (
         <Record
           record={record}
@@ -93,6 +99,16 @@ export default function RecordList() {
                 </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
                   Level
+                  <select
+                    className="ml-2 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                    value={levelFilter}
+                    onChange={(e) => setLevelFilter(e.target.value)}
+                  >
+                    <option value="all">All</option>
+                    <option value="Intern">Intern</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
+                  </select>
                 </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
                   Action
