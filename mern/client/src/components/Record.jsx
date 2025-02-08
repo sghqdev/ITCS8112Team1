@@ -13,7 +13,10 @@ export default function Record() {
   // State for bulk upload functionality
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewData, setPreviewData] = useState([]);
+  const [fullData, setFullData] = useState([]);
   const [fileName, setFileName] = useState("");
+  
+  const MAX_PREVIEW_ROWS = 10;
 
   const params = useParams();
   const navigate = useNavigate();
@@ -43,21 +46,18 @@ export default function Record() {
     return;
   }, [params.id, navigate]);
 
-  // These methods will update the state properties.
   function updateForm(value) {
     return setForm((prev) => {
       return { ...prev, ...value };
     });
   }
 
-  // This function will handle the submission.
   async function onSubmit(e) {
     e.preventDefault();
     const person = { ...form };
     try {
       let response;
       if (isNew) {
-        // if we are adding a new record we will POST to /record.
         response = await fetch("http://localhost:5050/record", {
           method: "POST",
           headers: {
@@ -66,7 +66,6 @@ export default function Record() {
           body: JSON.stringify(person),
         });
       } else {
-        // if we are updating a record we will PATCH to /record/:id.
         response = await fetch(`http://localhost:5050/record/${params.id}`, {
           method: "PATCH",
           headers: {
@@ -87,18 +86,17 @@ export default function Record() {
     }
   }
 
-  // This function handles Excel file selection and parsing
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setFileName(file.name);
       const data = await readExcelFile(file);
       setSelectedFile(file);
-      setPreviewData(data);
-    }className="... bg-purple-500 hover:bg-purple-600 text-white"
+      setFullData(data);
+      setPreviewData(data.slice(0, MAX_PREVIEW_ROWS));
+    }
   };
 
-  // This function reads and parses the Excel file
   const readExcelFile = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -118,7 +116,6 @@ export default function Record() {
     });
   };
 
-  // This function handles the bulk upload of records
   const handleBulkUpload = async () => {
     if (!selectedFile) return;
 
@@ -137,6 +134,7 @@ export default function Record() {
 
       setSelectedFile(null);
       setPreviewData([]);
+      setFullData([]);
       setFileName("");
       navigate("/");
     } catch (error) {
@@ -144,7 +142,6 @@ export default function Record() {
     }
   };
 
-  // This following section will display the form that takes the input from the user.
   return (
     <>
       <h3 className="text-lg font-semibold p-4">Create/Update Employee Record</h3>
@@ -163,7 +160,7 @@ export default function Record() {
             </p>
           </div>
 
-          <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 ">
+          <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8">
             <div className="sm:col-span-4">
               <label
                 htmlFor="name"
@@ -268,8 +265,9 @@ export default function Record() {
           className="inline-flex items-center justify-center whitespace-nowrap text-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3 cursor-pointer mt-4"
         />
       </form>
+
       {/* Bulk Upload Section */}
-      <div className="border rounded-lg overflow-hidden p-4">
+      <div className="border rounded-lg overflow-hidden p-4 mt-4">
         <h3 className="text-base font-semibold leading-7 text-slate-900 mb-4">
           Create Employee Records by uploading a file
         </h3>
@@ -279,7 +277,7 @@ export default function Record() {
             <label className="block text-sm font-medium leading-6 text-slate-900 mb-2">
               Upload a File
             </label>
-            <div className="flex items-center space-x-4 ">
+            <div className="flex items-center space-x-4">
               <label className="relative cursor-pointer">
                 <span className="text-base font-semibold leading-7 bg-purple-100 hover:bg-purple-300 text-purple-700 px-1 py-1">
                   Choose File
@@ -292,19 +290,29 @@ export default function Record() {
                 />
               </label>
               {fileName && (
-                <span className="text-sm text-green-700">{fileName}</span>
+                <div className="text-sm">
+                  <span className="text-green-700">{fileName}</span>
+                  <span className="text-gray-500 ml-2">
+                    (Total records: {fullData.length})
+                  </span>
+                </div>
               )}
             </div>
           </div>
 
           {previewData.length > 0 && (
             <div className="space-y-4">
-              <button
-                onClick={handleBulkUpload}
-                className="inline-flex items-center justify-center whitespace-nowrap text-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3"
-              >
-                Upload to MongoDB
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleBulkUpload}
+                  className="inline-flex items-center justify-center whitespace-nowrap text-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3"
+                >
+                  Upload to MongoDB
+                </button>
+                <span className="text-sm text-gray-500">
+                  Preview of first {Math.min(previewData.length, MAX_PREVIEW_ROWS)} rows (Total: {fullData.length} records)
+                </span>
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200">
@@ -322,7 +330,7 @@ export default function Record() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
-                    {previewData.map((row, index) => (
+                    {previewData.slice(0, MAX_PREVIEW_ROWS).map((row, index) => (
                       <tr key={index}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                           {row.name}
