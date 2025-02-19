@@ -46,6 +46,7 @@ const Record = (props) => (
 export default function RecordList() {
   const [records, setRecords] = useState([]);
   const [selectedRecords, setSelectedRecords] = useState(new Set());
+  const [searchTerm, setSearchTerm] = useState("");
 
   // This method fetches the records from the database.
   useEffect(() => {
@@ -60,7 +61,9 @@ export default function RecordList() {
       setRecords(records);
     }
     getRecords();
-  }, []);
+  }, [records.length], []);
+    return;
+
 
   // This method will delete a record
   async function deleteRecord(id) {
@@ -110,6 +113,18 @@ export default function RecordList() {
   // Modify the recordList function
   function recordList() {
     return records.map((record) => {
+  // Add new function to filter records
+  function getFilteredRecords() {
+    return records.filter((record) =>
+      record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.level.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
+
+  // Update recordList to use filtered records
+  function recordList() {
+    return getFilteredRecords().map((record) => {
       return (
         <Record
           record={record}
@@ -123,6 +138,7 @@ export default function RecordList() {
   }
 
   // Modify the return section to only show bulk delete button
+  // This following section will also display the table with the records of individuals.
   return (
     <>
       <div className="flex justify-between items-center p-4">
@@ -135,6 +151,13 @@ export default function RecordList() {
             Delete Selected ({selectedRecords.size})
           </button>
         )}
+        <input
+          type="text"
+          placeholder="Search Employee..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+        />
       </div>
       <div className="border rounded-lg overflow-hidden">
         <div className="relative w-full overflow-auto">
@@ -171,4 +194,4 @@ export default function RecordList() {
       </div>
     </>
   );
-}
+})}}
