@@ -78,8 +78,19 @@ export default function RecordList() {
     if (levelFilter === "all") return records;
     return records.filter((record) => record.level === levelFilter);
   };
-
-  // Modify the existing recordList function to use filteredRecords
+// Add these new functions to handle selection
+const handleSelectRecord = (id) => {
+  setSelectedRecords(prev => {
+    const newSelected = new Set(prev);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    return newSelected;
+  });
+};
+ // Modify the existing recordList function to use filteredRecords
  // function recordList() {
  //   return filteredRecords().map((record) => {
  //     return (
