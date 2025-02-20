@@ -292,9 +292,6 @@ export default function Record() {
               {fileName && (
                 <div className="text-sm">
                   <span className="text-green-700">{fileName}</span>
-                  <span className="text-gray-500 ml-2">
-                    (Total records: {fullData.length})
-                  </span>
                 </div>
               )}
             </div>
@@ -310,7 +307,7 @@ export default function Record() {
                   Upload to MongoDB
                 </button>
                 <span className="text-sm text-gray-500">
-                  Preview of first {Math.min(previewData.length, MAX_PREVIEW_ROWS)} rows (Total: {fullData.length} records)
+                  Preview of first {Math.min(previewData.length, MAX_PREVIEW_ROWS)} records below (Total Records in file = {fullData.length})
                 </span>
               </div>
 
