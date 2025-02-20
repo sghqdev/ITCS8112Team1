@@ -90,18 +90,18 @@ const handleSelectRecord = (id) => {
     return newSelected;
   });
 };
- // Modify the existing recordList function to use filteredRecords
- // function recordList() {
- //   return filteredRecords().map((record) => {
- //     return (
- //       <Record
- //         record={record}
- //         deleteRecord={() => deleteRecord(record._id)}
- //         key={record._id}
-// />
-//      );
-//    });
-//  };
+  Modify the existing recordList function to use filteredRecords
+  function recordList() {
+    return filteredRecords().map((record) => {
+      return (
+        <Record
+          record={record}
+          deleteRecord={() => deleteRecord(record._id)}
+          key={record._id}
+ />
+      );
+    });
+  };
 
   const handleSelectAll = () => {
     if (selectedRecords.size === records.length) {
