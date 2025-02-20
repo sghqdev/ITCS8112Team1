@@ -90,7 +90,7 @@ const handleSelectRecord = (id) => {
     return newSelected;
   });
 };
-  Modify the existing recordList function to use filteredRecords
+ // Modify the existing recordList function to use filteredRecords
   function recordList() {
     return filteredRecords().map((record) => {
       return (
