@@ -61,9 +61,7 @@ export default function RecordList() {
       setRecords(records);
     }
     getRecords();
-  }, [records.length], []);
-    return;
-
+  }, []);
 
   // This method will delete a record
   async function deleteRecord(id) {
@@ -110,9 +108,6 @@ export default function RecordList() {
     setSelectedRecords(new Set());
   }
 
-  // Modify the recordList function
-  function recordList() {
-    return records.map((record) => {
   // Add new function to filter records
   function getFilteredRecords() {
     return records.filter((record) =>
@@ -120,21 +115,6 @@ export default function RecordList() {
       record.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.level.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }
-
-  // Update recordList to use filtered records
-  function recordList() {
-    return getFilteredRecords().map((record) => {
-      return (
-        <Record
-          record={record}
-          deleteRecord={() => deleteRecord(record._id)}
-          key={record._id}
-          isSelected={selectedRecords.has(record._id)}
-          onSelectRecord={handleSelectRecord}
-        />
-      );
-    });
   }
 
   // Modify the return section to only show bulk delete button
@@ -194,4 +174,19 @@ export default function RecordList() {
       </div>
     </>
   );
-})}}
+
+  // Modify the recordList function
+  function recordList() {
+    return getFilteredRecords().map((record) => {
+      return (
+        <Record
+          record={record}
+          deleteRecord={() => deleteRecord(record._id)}
+          key={record._id}
+          isSelected={selectedRecords.has(record._id)}
+          onSelectRecord={handleSelectRecord}
+        />
+      );
+    });
+  }
+}
