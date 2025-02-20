@@ -204,17 +204,17 @@ const handleSelectRecord = (id) => {
   );
 
   // Modify the recordList function
-  function recordList() {
-    return getFilteredRecords().map((record) => {
-      return (
-        <Record
-          record={record}
-          deleteRecord={() => deleteRecord(record._id)}
-          key={record._id}
-          isSelected={selectedRecords.has(record._id)}
-          onSelectRecord={handleSelectRecord}
-        />
-      );
-    });
-  }
+//  function recordList() {
+//    return getFilteredRecords().map((record) => {
+//      return (
+//       <Record
+ //         record={record}
+ //         deleteRecord={() => deleteRecord(record._id)}
+ //         key={record._id}
+ //         isSelected={selectedRecords.has(record._id)}
+ //         onSelectRecord={handleSelectRecord}
+ //       />
+ //     );
+ //   });
+//  }
 }
