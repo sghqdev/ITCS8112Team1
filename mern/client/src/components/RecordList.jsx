@@ -73,33 +73,16 @@ export default function RecordList() {
     setRecords(newRecords);
   }
 
-  // Add this new function to filter records
-  const filteredRecords = () => {
-    if (levelFilter === "all") return records;
-    return records.filter((record) => record.level === levelFilter);
-  };
-// Add these new functions to handle selection
-const handleSelectRecord = (id) => {
-  setSelectedRecords(prev => {
-    const newSelected = new Set(prev);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    return newSelected;
-  });
-};
- // Modify the existing recordList function to use filteredRecords
- function recordList() {
- return filteredRecords().map((record) => {
-      return (
-        <Record
-          record={record}
-          deleteRecord={() => deleteRecord(record._id)}
-          key={record._id}
- />
-      );
+  // Add these new functions to handle selection
+  const handleSelectRecord = (id) => {
+    setSelectedRecords(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
     });
   };
 
@@ -126,13 +109,37 @@ const handleSelectRecord = (id) => {
     setSelectedRecords(new Set());
   }
 
-  // Add new function to filter records
+  // Add this combined filter function
   function getFilteredRecords() {
-    return records.filter((record) =>
-      record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.level.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return records
+      .filter((record) => {
+        // First apply level filter
+        if (levelFilter !== "all" && record.level !== levelFilter) {
+          return false;
+        }
+        // Then apply search filter
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          record.name.toLowerCase().includes(searchLower) ||
+          record.position.toLowerCase().includes(searchLower) ||
+          record.level.toLowerCase().includes(searchLower)
+        );
+      });
+  }
+
+  // Keep only one recordList function that uses the combined filter
+  function recordList() {
+    return getFilteredRecords().map((record) => {
+      return (
+        <Record
+          record={record}
+          deleteRecord={() => deleteRecord(record._id)}
+          key={record._id}
+          isSelected={selectedRecords.has(record._id)}
+          onSelectRecord={handleSelectRecord}
+        />
+      );
+    });
   }
 
   // Modify the return section to only show bulk delete button
@@ -202,20 +209,4 @@ const handleSelectRecord = (id) => {
       </div>
     </>
   );
-
-  // Modify the recordList function
-  /*
-  function recordList() {
-    return getFilteredRecords().map((record) => {
-      return (
-        <Record
-          record={record}
-          deleteRecord={() => deleteRecord(record._id)}
-          key={record._id}
-          isSelected={selectedRecords.has(record._id)}
-          onSelectRecord={handleSelectRecord}
-        />
-      );
-    }); 
-  }*/
 }
